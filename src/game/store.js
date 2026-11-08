@@ -18,6 +18,7 @@ const initialProgress = () => ({
   objective: '',
   startedAt: 0,
   finishedAt: 0,
+  ms: {},                 // free-form state owned by the current mission (see mission.initialState)
 });
 
 export const useGame = create((set, get) => ({
@@ -77,6 +78,7 @@ export const useGame = create((set, get) => ({
   choose: (slot, cardId) => set((s) => ({ selection: { ...s.selection, [slot]: cardId } })),
   recordAttempt: (result) => set((s) => ({ attempts: s.attempts + 1, lastResult: result })),
   openDoor: () => set({ doorOpen: true }),
+  patchMs: (patch) => set((s) => ({ ms: { ...s.ms, ...(typeof patch === 'function' ? patch(s.ms) : patch) } })),
 
   resetMission: () => set({ ...initialProgress(), nearby: null, toast: null, paused: false, dialogue: { current: null, queue: [] } }),
 }));

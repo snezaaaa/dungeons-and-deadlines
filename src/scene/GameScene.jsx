@@ -27,7 +27,8 @@ function step(dt, st) {
   world.chars.forEach((c, i) => {
     const isActive = i === st.active;
     let ix = 0, iz = 0, run = false;
-    if (isActive && controllable) {
+    const stunned = c.stunUntil > world.time;
+    if (isActive && controllable && !stunned) {
       const f = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
       const r = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
       const yaw = world.cam.yaw;
@@ -97,7 +98,7 @@ function Characters({ mission }) {
       st.setNearby(findNearby(st));
     } else if (st.nearby) st.setNearby(null);
 
-    mission.update?.();
+    mission.update?.(Math.min(dtRaw, 0.25), st);
   });
 
   return ROSTER.map((cfg, i) => (
@@ -141,9 +142,11 @@ function CameraRig({ mission }) {
       // hard cut at shot start, smooth within a shot
       if (cut) { camera.position.copy(tmpV); look.current.copy(tmpL); }
       k = 6;
-    } else if (st.phase === 'cutscene' && world.cine.mode === 'door') {
+    } else if (st.phase === 'cutscene' && cin[world.cine.mode]?.pos) {
+      // generic cutscene shot: { pos, look } keyed by world.cine.mode (e.g. 'door', 'nap')
       world.cine.t += cdt;
-      tmpV.fromArray(cin.door.pos); tmpL.fromArray(cin.door.look); k = 2.5;
+      const shot = cin[world.cine.mode];
+      tmpV.fromArray(shot.pos); tmpL.fromArray(shot.look); k = shot.k || 2.5;
     } else if (st.phase === 'victory' || st.phase === 'complete') {
       world.cine.t += cdt;
       const v = cin.victory, a = Math.PI + Math.sin(world.cine.t * 0.25) * 0.7;

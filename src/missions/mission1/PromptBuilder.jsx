@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useGame } from '../game/store.js';
-import { SLOTS, CARDS, isCardAvailable, assemblePrompt } from '../missions/mission1/promptPuzzle.js';
-import { testPrompt, startDoorSequence } from '../missions/mission1/logic.js';
-import { sfx } from '../game/audio.js';
+import { useGame } from '../../game/store.js';
+import { SLOTS, CARDS, isCardAvailable, assemblePrompt } from './promptPuzzle.js';
+import { testPrompt, startDoorSequence } from './logic.js';
+import { sfx } from '../../game/audio.js';
 
 export default function PromptBuilder() {
   const inventory = useGame((s) => s.inventory);

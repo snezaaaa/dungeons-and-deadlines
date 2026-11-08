@@ -4,24 +4,26 @@ import { ROSTER, SPEAKERS } from '../characters/roster.js';
 import { MISSIONS, getMission } from '../missions/registry.js';
 import { sfx } from '../game/audio.js';
 import { startMission, skipIntro, resume, restartMission, switchTo, lockPointer } from './actions.js';
-import PromptBuilder from './PromptBuilder.jsx';
 
 export default function UI() {
   const phase = useGame((s) => s.phase);
   const paused = useGame((s) => s.paused);
   const builderOpen = useGame((s) => s.builderOpen);
+  const mission = getMission(useGame((s) => s.missionId));
+  const { PuzzleUI, Overlay } = mission;
   return (
     <div className="ui">
       <DialogueDirector />
       {phase === 'loading' && <LoadingScreen />}
       {phase === 'title' && <TitleScreen />}
       {(phase === 'intro' || phase === 'cutscene' || phase === 'victory') && <Letterbox />}
-      {phase === 'intro' && <IntroOverlay />}
-      {phase === 'victory' && <div className="victory-banner">MISSION 1 COMPLETE</div>}
+      {phase === 'intro' && <IntroOverlay text={mission.announcement} />}
+      {phase === 'victory' && <div className="victory-banner">MISSION {mission.number} COMPLETE</div>}
+      {Overlay && phase !== 'title' && phase !== 'loading' && <Overlay />}
       {(phase === 'playing' || phase === 'cutscene') && <HUD />}
       {phase !== 'title' && phase !== 'loading' && <Subtitles />}
       <Toast />
-      {builderOpen && <PromptBuilder />}
+      {builderOpen && PuzzleUI && <PuzzleUI />}
       {paused && <PauseMenu />}
       {phase === 'complete' && <CompleteScreen />}
     </div>
@@ -46,6 +48,7 @@ function DialogueDirector() {
 
 function Subtitles() {
   const line = useGame((s) => s.dialogue.current);
+  const builderOpen = useGame((s) => s.builderOpen);
   const [shown, setShown] = useState('');
   useEffect(() => {
     if (!line) { setShown(''); return; }
@@ -63,7 +66,7 @@ function Subtitles() {
   const sp = SPEAKERS[line.who] || SPEAKERS.narrator;
   const charIndex = ROSTER.findIndex((c) => c.id === line.who);
   return (
-    <div className={`subtitles ${line.who === 'system' ? 'system' : ''}`} onClick={() => useGame.getState().advanceDialogue()} data-testid="subtitles">
+    <div className={`subtitles ${line.who === 'system' ? 'system' : ''} ${builderOpen ? 'top' : ''}`} onClick={() => useGame.getState().advanceDialogue()} data-testid="subtitles">
       {sp.name && (
         <div className="speaker" style={{ color: sp.color }}>
           {charIndex >= 0 && <span className="speaker-chip" style={{ background: sp.color }}>{charIndex + 1}</span>}
@@ -100,6 +103,8 @@ function Logo({ small }) {
 }
 
 function TitleScreen() {
+  const missionId = useGame((s) => s.missionId);
+  const selected = getMission(missionId);
   return (
     <div className="screen title">
       <Logo />
@@ -116,15 +121,26 @@ function TitleScreen() {
         ))}
       </div>
       <div className="title-buttons">
-        <button className="btn primary" data-testid="start" onClick={() => startMission()}>▶ START MISSION 1</button>
+        <button className="btn primary" data-testid="start" onClick={() => startMission()}>▶ START MISSION {selected.number}</button>
         <button className="btn" onClick={() => startMission({ skipIntro: true })}>Skip intro</button>
       </div>
-      <Controls />
-      <div className="missions-row">
+      <div className="missions-row" role="radiogroup" aria-label="Choose a mission">
         {MISSIONS.map((m) => (
-          <div key={m.id} className={`mission-pill ${m.status}`}>M{m.number}: {m.title} {m.status !== 'available' && <em>coming soon</em>}</div>
+          <button
+            key={m.id}
+            role="radio"
+            aria-checked={m.id === missionId}
+            data-testid={`select-${m.id}`}
+            disabled={m.status !== 'available'}
+            className={`mission-pill ${m.status} ${m.id === missionId ? 'selected' : ''}`}
+            onClick={() => useGame.setState({ missionId: m.id })}
+          >
+            M{m.number}: {m.title} {m.status !== 'available' && <em>coming soon</em>}
+          </button>
         ))}
       </div>
+      <p className="mission-tagline">{selected.tagline}</p>
+      <Controls />
     </div>
   );
 }
@@ -146,10 +162,9 @@ function Controls() {
 // ---------------------------------------------------------------- cinematics
 function Letterbox() { return (<><div className="letterbox top" /><div className="letterbox bottom" /></>); }
 
-function IntroOverlay() {
+function IntroOverlay({ text }) {
   const [t, setT] = useState(0);
   useEffect(() => { const start = performance.now(); const id = setInterval(() => setT((performance.now() - start) / 1000), 50); return () => clearInterval(id); }, []);
-  const text = 'ATTENTION PARTICIPANTS. YOUR CERTIFICATES HAVE BEEN LOCKED.';
   const typed = text.slice(0, Math.floor(Math.max(0, t - 0.4) * 28));
   return (
     <>
@@ -176,19 +191,21 @@ function HUD() {
     return () => document.removeEventListener('pointerlockchange', f);
   }, []);
   const objective = mission.objective(st);
-  const slots = [['role', 'ROLE', '#f472b6'], ['task', 'TASK', '#60a5fa'], ['context', 'CONTEXT', '#34d399'], ['format', 'FORMAT', '#fbbf24']];
+  const items = mission.hudItems(st);
+  const { HudExtra } = mission;
   return (
     <>
       <div className="hud-objective" data-testid="objective">
-        <div className="mission-name">MISSION 1 · THE IMPOSSIBLE PROMPT</div>
+        <div className="mission-name">MISSION {mission.number} · {mission.title.toUpperCase()}</div>
         <div className="objective-text">▸ {objective}</div>
         <div className="components">
-          {slots.map(([id, label, col]) => (
-            <div key={id} className={`comp ${st.inventory.includes(id) ? 'got' : ''}`} style={{ '--c': col }} data-testid={`comp-${id}`}>
-              {st.inventory.includes(id) ? '✔' : '?'} {label}
+          {items.map(({ id, label, color, got }) => (
+            <div key={id} className={`comp ${got ? 'got' : ''}`} style={{ '--c': color }} data-testid={`comp-${id}`}>
+              {got ? '✔' : '?'} {label}
             </div>
           ))}
         </div>
+        {HudExtra && <HudExtra />}
       </div>
       <div className="char-bar">
         {ROSTER.map((c, i) => (
@@ -249,12 +266,14 @@ function CompleteScreen() {
   const mission = getMission(st.missionId);
   const secs = st.finishedAt && st.startedAt ? Math.round((st.finishedAt - st.startedAt) / 1000) : 0;
   const L = mission.lesson;
+  const next = MISSIONS.find((m) => m.number === mission.number + 1);
+  const rank = st.attempts <= 1 ? mission.ranks[0] : st.attempts <= 3 ? mission.ranks[1] : mission.ranks[2];
   return (
     <div className="screen complete" data-testid="complete-screen">
       <div className="panel wide">
-        <div className="stamp">CERTIFICATE 33% UNLOCKED</div>
-        <h1>MISSION 1 COMPLETE</h1>
-        <p className="stats">Time: {Math.floor(secs / 60)}m {secs % 60}s · Prompt attempts: {st.attempts} · Rank: {st.attempts <= 1 ? 'PROMPT WIZARD' : st.attempts <= 3 ? 'PROMPT APPRENTICE' : 'ENTHUSIASTIC TOASTER'}</p>
+        <div className="stamp">{mission.certificate}</div>
+        <h1>MISSION {mission.number} COMPLETE</h1>
+        <p className="stats">Time: {Math.floor(secs / 60)}m {secs % 60}s · {mission.attemptLabel}: {st.attempts}{mission.extraStats ? ` · ${mission.extraStats(st)}` : ''} · Rank: {rank}</p>
         <h3>📚 What you just learned: {L.title}</h3>
         <div className="lesson-grid">
           {L.points.map(([k, v]) => <div key={k} className="lesson"><b>{k}</b><span>{v}</span></div>)}
@@ -265,12 +284,15 @@ function CompleteScreen() {
         </div>
         <p className="muted">{L.extra}</p>
         <div className="next">
-          {MISSIONS.filter((m) => m.number > 1).map((m) => (
-            <div key={m.id} className="next-card"><b>Mission {m.number}: {m.title}</b><span>{m.tagline}</span><em>Coming soon</em></div>
+          {MISSIONS.filter((m) => m.number > mission.number).map((m) => (
+            <div key={m.id} className="next-card"><b>Mission {m.number}: {m.title}</b><span>{m.tagline}</span><em>{m.status === 'available' ? 'Unlocked!' : 'Coming soon'}</em></div>
           ))}
         </div>
         <div className="title-buttons">
-          <button className="btn primary" onClick={() => startMission()}>Replay Mission 1</button>
+          {next?.status === 'available' && (
+            <button className="btn primary" data-testid="next-mission" onClick={() => startMission({ missionId: next.id })}>▶ Continue to Mission {next.number}</button>
+          )}
+          <button className={`btn ${next?.status === 'available' ? '' : 'primary'}`} onClick={() => startMission()}>Replay Mission {mission.number}</button>
           <button className="btn" onClick={() => { useGame.setState({ phase: 'title' }); }}>Title screen</button>
         </div>
       </div>

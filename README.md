@@ -24,6 +24,26 @@ Built with **Vite + React + Three.js + React Three Fiber**. It needs no backend,
 
 There are also extra interactions (5 snoopable computers, coffee machine, clock, presentation screen, plant, Mission 2 door) that add jokes, tips and hints about future missions.
 
+## Mission 2: The Coffee Break Crisis (playable)
+
+Teaches **fact-checking AI output**: hallucinations, source credibility and verification. Start it from the debrief's **Continue to Mission 2** button, or pick **M2** on the title screen.
+
+1. Opening announcement: *"ATTENTION PARTICIPANTS. COFFEE SERVICE HAS BEEN SUSPENDED."* BREW-9000, the break-room coffee machine, has turned "intelligent". It refuses to serve coffee until you accept five claims that it states with total confidence. It also hands you its own brochure as "proof".
+2. Find **reliable evidence** for every claim. Each source needs one character's skill:
+
+| Evidence | Where | Who |
+|---|---|---|
+| Encyclopedia of Food History | Bookshelf | 1 · The Mastermind |
+| University botany field card | Sulking fridge (tell it a joke) | 2 · The Joker |
+| Supplier spec sheet | Manager's locked drawer | 3 · The Boss |
+| Security camera replay | CCTV monitor (needs narration) | 4 · The Commentator |
+| Maintenance log | Behind the 140 kg dishwasher | 5 · The Fighter |
+
+   You can also pick up unreliable decoys: BREW-9000's own brochure, and a forum printout from "CoffeeTruthz420".
+3. **Stay awake.** A caffeine meter drains while you explore (about 5 minutes from full). Patrolling **Mop-Bots** knock you back and cost caffeine. Donuts, sugar packets and the water cooler refill it. If it hits 0, everyone naps: that's the failure state, and you wake up at 60% to try again.
+4. At the **Fact-Check Station**, choose a source and a verdict (TRUE or HALLUCINATION) for each claim. A claim only counts when the verdict is right *and* the source is reliable. If you cite the brochure, BREW-9000 gloats. Two of the five claims are actually true, because AI isn't always wrong.
+5. When all five are verified, BREW-9000 is grounded, the coffee flows and the vault door opens. Walk into the antechamber for the victory sequence and the debrief on hallucinations and sources (certificate 66%).
+
 ### Controls
 | Key | Action |
 |---|---|
@@ -85,7 +105,7 @@ npm i -D playwright && npx playwright install chromium
 ```bash
 npm run build && (npx vite preview --port 4173 &) && npm run test:e2e
 ```
-This runs an automated play-through in real Chromium with WebGL. It covers the loading and title screens, the intro, movement, wall collision, jumping, character switching, wrong-character and right-character interactions, all four pickups, the terminal, pause, a failed prompt, a successful prompt, the door cutscene, walking through the door, victory, the debrief, and the phone-width layout. It saves screenshots to `tests/e2e/screenshots/`.
+This runs automated play-throughs of both missions in real Chromium with WebGL (`test:e2e:m1` and `test:e2e:m2` run them separately). Mission 2's covers mission select, its intro, caffeine drain, Mop-Bot knockback, every character's evidence, the dishwasher collider swap, snacks, the nap failure state, rejection of an unreliable source, highlighting of the bad claim, the grounded cutscene, victory and the debrief. Mission 1's covers the loading and title screens, the intro, movement, wall collision, jumping, character switching, wrong-character and right-character interactions, all four pickups, the terminal, pause, a failed prompt, a successful prompt, the door cutscene, walking through the door, victory, the debrief, and the phone-width layout. It saves screenshots to `tests/e2e/screenshots/`.
 
 ## Project structure
 
@@ -108,18 +128,26 @@ src/
   missions/
     registry.js              Mission list + the shared mission interface
     mission1/
+      index.js               Mission definition plugged into the registry
       layout.js              Level geometry, colliders, spawns (shared by renderer & physics)
       TrainingCenter.jsx     The 3D training center + lobby
       logic.js               Interactables, dialogue, objectives, cutscenes, win flow
       promptPuzzle.js        Puzzle rules & cards (pure, unit tested)
+      PromptBuilder.jsx      The puzzle modal
+    mission2/
+      index.js               Mission definition (HUD items, caffeine meter, nap overlay, lesson)
+      layout.js              Break room, antechamber, colliders, Mop-Bot routes (unit tested)
+      BreakRoom.jsx          The 3D break room, BREW-9000, Mop-Bots, vault antechamber
+      logic.js               Evidence, snacks, caffeine, naps, Mop-Bots, fact-check flow
+      factCheck.js           Claims, sources & evaluation rules (pure, unit tested)
+      ui.jsx                 Fact-Check Station, caffeine meter, nap overlay
   ui/                        HUD, subtitles, Prompt Builder, menus, keyboard controller
 ```
 
-### Adding Mission 2 / Mission 3
-Missions 2 and 3 are already registered as `coming-soon` in `src/missions/registry.js`, and they are shown on the title and debrief screens and inside the lobby. To build one:
-1. Create `src/missions/mission2/` with `layout.js`, a level component, and `logic.js`, following the mission1 layout.
-2. In `registry.js`, fill in the same shape as mission1 (`Level, spawns, colliders, openSpaces, interactables, intro, endIntro, update, objective, reset, cinematics, lesson`) and set `status: 'available'`.
-3. Set `missionId` in the store, for example from the Mission 1 debrief's "next" card. `GameScene` and the HUD read everything from the registry, so no engine code needs to change.
+### Adding Mission 3
+Mission 3 is registered as `coming-soon` in `src/missions/registry.js`. The Mission 2 debrief and the vault in the antechamber both point to it. To build it:
+1. Create `src/missions/mission3/` following mission2: `layout.js`, a level component, `logic.js`, and an `index.js` that exports the mission object (the interface is documented at the top of `registry.js`).
+2. Import it in `registry.js` in place of the stub. The title screen, the "Continue to Mission N" button, the HUD, cutscene cameras and the debrief all read from the registry, so no engine code needs to change.
 
 ## Custom avatars (GLB)
 

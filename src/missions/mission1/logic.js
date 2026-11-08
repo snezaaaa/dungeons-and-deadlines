@@ -304,7 +304,7 @@ export const INTERACTABLES = [
   {
     id: 'exitDoor', x: PROPS.exitDoor.x, z: PROPS.exitDoor.z + 1.2, r: 1.8,
     label: () => 'Mission 2 door (locked)',
-    use: () => say({ who: 'ai', text: 'MISSION 2: THE COFFEE BREAK CRISIS. Coming soon to a training center near you.' }, { interrupt: true }),
+    use: () => say({ who: 'ai', text: 'MISSION 2: THE COFFEE BREAK CRISIS. The break room is through here. Finish celebrating first. (It unlocks when you complete this mission.)' }, { interrupt: true }),
   },
 ];
 

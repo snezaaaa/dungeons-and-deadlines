@@ -135,6 +135,7 @@ await wait(2500); await shot('12-victory');
 for (let i = 0; i < 8 && (await st()).phase === 'victory'; i++) { await page.keyboard.press('Enter'); await wait(400); }
 check('mission complete screen with lesson', await waitPhase('complete', 10000));
 await wait(600); await shot('13-complete');
+check('debrief offers "Continue to Mission 2"', await page.isVisible('[data-testid=next-mission]'));
 
 // ---- responsive: small viewport loading/title
 const mobile = await browser.newPage({ viewport: { width: 390, height: 780 } });

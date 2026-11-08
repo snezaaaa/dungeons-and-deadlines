@@ -79,7 +79,7 @@ function useStaticTextures() {
     const m2 = makeCanvasTexture(512, 256, (g, w, h) => {
       g.fillStyle = '#3b2412'; g.fillRect(0, 0, w, h); g.fillStyle = '#fbbf24'; g.font = `40px ${FONT}`; g.textAlign = 'center';
       g.fillText('MISSION 2', w / 2, 70); g.fillStyle = '#fff'; g.font = `32px ${FONT}`; g.fillText('THE COFFEE BREAK', w / 2, 130); g.fillText('CRISIS', w / 2, 172);
-      g.fillStyle = '#fca5a5'; g.font = 'bold 24px system-ui'; g.fillText('COMING SOON', w / 2, 222);
+      g.fillStyle = '#86efac'; g.font = 'bold 24px system-ui'; g.fillText('NEXT MISSION', w / 2, 222);
     });
     const m3 = makeCanvasTexture(512, 256, (g, w, h) => {
       g.fillStyle = '#1e1b4b'; g.fillRect(0, 0, w, h); g.fillStyle = '#c4b5fd'; g.font = `40px ${FONT}`; g.textAlign = 'center';

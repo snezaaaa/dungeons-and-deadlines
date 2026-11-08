@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test tests/unit/*.test.js",
-    "test:e2e": "node tests/e2e/playthrough.mjs"
+    "test:e2e": "node tests/e2e/playthrough.mjs && node tests/e2e/mission2.mjs",
+    "test:e2e:m1": "node tests/e2e/playthrough.mjs",
+    "test:e2e:m2": "node tests/e2e/mission2.mjs"
   },
   "dependencies": {
     "@react-three/drei": "9.122.0",

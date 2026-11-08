@@ -14,11 +14,13 @@ export function lockPointer() {
   try { const p = el?.requestPointerLock?.(); p?.catch?.(() => {}); } catch { /* ignore */ }
 }
 
-export function startMission({ skipIntro = false } = {}) {
+export function startMission({ skipIntro = false, missionId } = {}) {
   initAudio();
+  if (missionId) useGame.setState({ missionId });
   G().resetMission();
+  useGame.setState({ ms: mission().initialState?.() || {} });
   mission().reset();
-  world.cam = { yaw: Math.PI / 2, pitch: 0.35, dist: 5.2 };
+  world.cam = { yaw: mission().startYaw ?? Math.PI / 2, pitch: 0.35, dist: 5.2 };
   useGame.setState({ active: 0 });
   if (skipIntro) {
     G().setPhase('intro');

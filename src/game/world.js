@@ -9,6 +9,7 @@ export const world = {
     emote: null,         // 'cheer' | 'dance' | 'facepalm' | 'shrug' | null
     emoteUntil: 0,
     grounded: true,
+    stunUntil: 0,        // controls ignored until world.time passes this (knockbacks)
   })),
   colliders: [],         // AABBs from the current level
   interactables: [],     // from the current mission
@@ -23,7 +24,7 @@ export const world = {
 export function placeCharacters(spawns) {
   spawns.forEach((s, i) => {
     const c = world.chars[i];
-    Object.assign(c, { x: s[0], z: s[1], yaw: s[2] ?? 0, y: 0, vy: 0, vx: 0, vz: 0, speed: 0, emote: null });
+    Object.assign(c, { x: s[0], z: s[1], yaw: s[2] ?? 0, y: 0, vy: 0, vx: 0, vz: 0, speed: 0, emote: null, stunUntil: 0 });
   });
 }
 
