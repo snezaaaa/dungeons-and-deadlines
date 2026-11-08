@@ -2,3 +2,7 @@ node_modules
 dist
 tests/e2e/screenshots
 *.log
+
+# local backup copies of this repo
+*.bundle
+*-source.zip
