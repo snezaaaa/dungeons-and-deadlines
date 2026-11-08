@@ -160,6 +160,7 @@ await wait(600);
 const txt = await page.textContent('[data-testid=complete-screen]');
 check('debrief: 66% certificate + fact-checking lesson', /66%/.test(txt) && /Hallucinations/i.test(txt) && /MISSION 2 COMPLETE/.test(txt));
 await shot('m2-12-complete');
+check('debrief offers "Continue to Mission 3"', /Mission 3/.test(await page.textContent('[data-testid=next-mission]').catch(() => '')));
 
 const real = errors.filter((e) => !/GPU stall|WebGL|AudioContext/i.test(e));
 check('no runtime errors in console', real.length === 0, real.slice(0, 3).join(' | '));

@@ -21,14 +21,12 @@
  */
 import mission1 from './mission1/index.js';
 import mission2 from './mission2/index.js';
+import mission3 from './mission3/index.js';
 
 export const MISSIONS = [
   mission1,
   mission2,
-  {
-    id: 'mission3', number: 3, title: 'The Final Certificate', status: 'coming-soon',
-    tagline: 'The certificate vault. The final prompt. The longest PowerPoint in history.',
-  },
+  mission3,
 ];
 
 export const getMission = (id) => MISSIONS.find((m) => m.id === id);

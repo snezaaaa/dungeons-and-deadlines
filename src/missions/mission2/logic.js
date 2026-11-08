@@ -17,6 +17,7 @@ const ms = () => G().ms;
 
 export const CAFFEINE_DRAIN = 0.34;   // % per second while exploring (~5 minutes from full)
 export const BOT_SPEED = 1.7;
+let drainAcc = 0;
 
 export const initialState = () => ({
   caffeine: 100, naps: 0, bumps: 0, napping: false,
@@ -262,7 +263,7 @@ export const INTERACTABLES = [
   {
     id: 'vault', x: PROPS.vault.x, z: PROPS.vault.z + 1.3, r: 1.8,
     label: () => 'Inspect the Certificate Vault (Mission 3)',
-    use: () => say({ who: 'system', text: 'MISSION 3: THE FINAL CERTIFICATE. VAULT SEALED. COMING SOON.' }, { interrupt: true }),
+    use: () => say({ who: 'system', text: 'MISSION 3: THE FINAL CERTIFICATE. The vault opens when this mission is complete. Finish your coffee first.' }, { interrupt: true }),
   },
 ];
 
@@ -433,11 +434,15 @@ export function update(dt, st) {
     if (col.id === 'dishwasherMoved') col.enabled = !!st.ms.dishwasherMoved;
   }
   if (!st.doorOpen) {
-    const c = Math.max(0, st.ms.caffeine - CAFFEINE_DRAIN * dt);
-    // write without re-rendering every frame: only patch when the rounded value changes
-    if (Math.floor(c) !== Math.floor(st.ms.caffeine) || c === 0) G().patchMs({ caffeine: c });
-    else st.ms.caffeine = c;
-    if (c <= 0 && !st.ms.napping) startNap();
+    // accumulate the drain and write it through the store a few times per second; always
+    // subtract from the CURRENT value so bumps/snacks earlier in this frame are never overwritten
+    drainAcc += CAFFEINE_DRAIN * dt;
+    if (drainAcc >= 0.1) {
+      const amount = drainAcc;
+      drainAcc = 0;
+      G().patchMs((m) => ({ caffeine: Math.max(0, m.caffeine - amount) }));
+    }
+    if (G().ms.caffeine <= 0 && !G().ms.napping) startNap();
   }
   const a = world.chars[st.active];
   if (st.doorOpen && inRect(a.x, a.z, EXIT_ZONE)) startVictory();
@@ -460,6 +465,7 @@ export function startVictory() {
 }
 
 export function reset() {
+  drainAcc = 0;
   placeCharacters(SPAWNS);
   resetBots();
   world.cine = { mode: null, t: 0 };

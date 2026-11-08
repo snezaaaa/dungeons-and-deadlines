@@ -163,8 +163,9 @@ function CameraRig({ mission }) {
       let d = 0.4;
       for (; d < dist; d += 0.1) {
         const x = tmpT.x + dir.x * d, z = tmpT.z + dir.z * d, y = tmpT.y + dir.y * d;
-        const open = mission.openSpaces.some((r) => inRect(x, z, r));
-        if (!open || y > 4.2 || y < 0.25) { d -= 0.15; break; }
+        // each open-space rect may set its own ceiling (maxY); default 4.2 m
+        const open = mission.openSpaces.some((r) => inRect(x, z, r) && y <= (r.maxY ?? 4.2));
+        if (!open || y < 0.25) { d -= 0.15; break; }
       }
       d = Math.max(0.6, d);
       tmpV.copy(tmpT).addScaledVector(dir, d);

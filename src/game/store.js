@@ -67,8 +67,9 @@ export const useGame = create((set, get) => ({
   },
   advanceDialogue: () => {
     const { current, queue } = get().dialogue;
-    current?.then?.();
     set({ dialogue: { current: queue[0] || null, queue: queue.slice(1) } });
+    // run the callback AFTER advancing, so a callback that queues new dialogue (say + interrupt) is kept
+    current?.then?.();
   },
   clearDialogue: () => set({ dialogue: { current: null, queue: [] } }),
 

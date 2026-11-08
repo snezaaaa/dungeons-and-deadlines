@@ -93,6 +93,7 @@ export const SPEAKERS = {
   system: { name: 'ANNOUNCEMENT', color: '#ff4d4d' },
   ai: { name: 'PROMPTOTRON 3000', color: '#22d3ee' },
   brew: { name: 'BREW-9000', color: '#fbbf24' },
+  admin: { name: 'THE ADMINISTRATOR', color: '#e879f9' },
   narrator: { name: '', color: '#cbd5e1' },
   ...Object.fromEntries(ROSTER.map((c) => [c.id, { name: c.name, color: c.color }])),
 };

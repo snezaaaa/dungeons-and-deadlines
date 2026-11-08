@@ -59,7 +59,7 @@ function useTextures() {
       noNap: sign(256, 128, '#1e3a8a', '#ffffff', ['NO NAPPING', 'per Policy 7.4(b)'], 34),
       station: sign(512, 128, '#f59e0b', '#111111', ['FACT-CHECK STATION', 'trust · but · verify'], 46),
       manager: sign(256, 64, '#111827', '#facc15', ['MANAGER · KEEP OUT'], 26),
-      m3: sign(512, 256, '#1e1b4b', '#c4b5fd', ['MISSION 3', 'THE FINAL CERTIFICATE', 'VAULT SEALED'], 44),
+      m3: sign(512, 256, '#1e1b4b', '#c4b5fd', ['MISSION 3', 'THE FINAL CERTIFICATE', 'NEXT MISSION'], 44),
       vaultSign: sign(256, 96, '#065f46', '#d1fae5', ['VAULT'], 56),
       donutLabel: sign(256, 64, '#fce7f3', '#be185d', ['FREE DONUTS'], 30),
       bulletin: makeCanvasTexture(512, 320, (g, w, h) => {

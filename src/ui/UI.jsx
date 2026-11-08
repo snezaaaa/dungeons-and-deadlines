@@ -283,6 +283,7 @@ function CompleteScreen() {
           <div className="good"><b>✅ Strong prompt</b><p>“{L.example.good}”</p></div>
         </div>
         <p className="muted">{L.extra}</p>
+        {mission.Finale && <mission.Finale />}
         <div className="next">
           {MISSIONS.filter((m) => m.number > mission.number).map((m) => (
             <div key={m.id} className="next-card"><b>Mission {m.number}: {m.title}</b><span>{m.tagline}</span><em>{m.status === 'available' ? 'Unlocked!' : 'Coming soon'}</em></div>
