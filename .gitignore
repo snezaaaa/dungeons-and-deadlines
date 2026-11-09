@@ -6,3 +6,4 @@ tests/e2e/screenshots
 # local backup copies of this repo
 *.bundle
 *-source.zip
+recordings
