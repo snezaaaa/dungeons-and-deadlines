@@ -6,7 +6,7 @@ import { world } from '../../game/world.js';
 import { makeCanvasTexture, useCanvasTexture, FONT } from '../../scene/canvasTexture.js';
 import { HALL, CORRIDOR, CORE, WALL_T, GAP, SEAL_POS, PROPS } from './layout.js';
 import { SEALS } from './dilemmas.js';
-import { LASERS, CHECKPOINTS, SWEEP_HEIGHT } from './lasers.js';
+import { LASERS, CHECKPOINTS, SWEEP_HEIGHT, dangerZone } from './lasers.js';
 import { laserStates } from './logic.js';
 
 const damp = THREE.MathUtils.damp;
@@ -148,7 +148,7 @@ function Laser({ index }) {
     <group ref={group} position={[0, 0, l.type === 'gate' ? l.z : l.z1]}>
       {heights.map((y, i) => (
         <mesh key={y} position={[0, y, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.035, 0.035, GAP * 2, 8]} />
+          <cylinderGeometry args={[l.type === 'sweep' ? 0.07 : 0.035, l.type === 'sweep' ? 0.07 : 0.035, GAP * 2, 8]} />
           <meshStandardMaterial ref={(m) => (mats.current[i] = m)} color="#ff2d2d" emissive="#ff2d2d" emissiveIntensity={3} transparent toneMapped={false} />
         </mesh>
       ))}
@@ -310,6 +310,7 @@ export default function VaultHall() {
       {[-1, 1].map((sgn) => <Box key={'s' + sgn} s={[0.03, 0.06, KD]} p={[sgn * (GAP - 0.02), 0.08, KC]} c="#ef4444" o={{ emissive: '#ef4444', emissiveIntensity: 1.5 }} cast={false} />)}
       {/* painted on the floor in front of the entrance, so it never blocks the camera's view down the corridor */}
       <Panel w={4.2} h={1.05} p={[0, 0.02, HALL.minZ + 1.6]} r={[-Math.PI / 2, 0, 0]} tex={T.corridorSign} emissive={0.7} />
+      <FloorZones />
       {CHECKPOINTS.map((z) => (
         <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, z]}><circleGeometry args={[0.8, 28]} /><meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.8} transparent opacity={0.55} /></mesh>
       ))}
@@ -359,4 +360,27 @@ function ConsoleRing() {
       <meshBasicMaterial color={on ? '#c084fc' : '#facc15'} transparent opacity={0.5} />
     </mesh>
   );
+}
+
+// Floor markings: red JUMP zones under sweeping lasers, amber WAIT lines in front of gates.
+function FloorZones() {
+  const tex = useMemo(() => ({
+    jump: makeCanvasTexture(256, 128, (g, w, h) => {
+      g.fillStyle = 'rgba(220,38,38,0.85)'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 14; for (let x = -h; x < w; x += 40) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + h, 0); g.stroke(); }
+      g.fillStyle = '#fff'; g.font = `64px ${FONT}`; g.textAlign = 'center'; g.fillText('JUMP', w / 2, 88);
+    }),
+    wait: makeCanvasTexture(256, 64, (g, w, h) => {
+      g.fillStyle = 'rgba(245,158,11,0.9)'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#111'; g.font = `40px ${FONT}`; g.textAlign = 'center'; g.fillText('WAIT', w / 2, 46);
+    }),
+  }), []);
+  return LASERS.map((l) => {
+    const [near, far] = dangerZone(l);
+    if (l.type === 'sweep') {
+      return <Panel key={l.id} w={GAP * 2 - 0.2} h={near - far} p={[0, 0.03, (near + far) / 2]} r={[-Math.PI / 2, 0, 0]} tex={tex.jump} emissive={0.5} />;
+    }
+    // the WAIT line sits just in front of the gate's danger band
+    return <Panel key={l.id} w={GAP * 2 - 0.2} h={0.45} p={[0, 0.03, near + 0.5]} r={[-Math.PI / 2, 0, 0]} tex={tex.wait} emissive={0.5} />;
+  });
 }

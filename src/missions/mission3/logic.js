@@ -9,7 +9,7 @@ import { sfx } from '../../game/audio.js';
 import { ROSTER, indexOfChar } from '../../characters/roster.js';
 import { SEALS, sealById, answerSeal, STRIKES_FOR_LOCKDOWN } from './dilemmas.js';
 import { evaluateFinalPrompt, hasAllSeals, HINTS } from './finalPrompt.js';
-import { LASERS, laserState, laserHits, checkpointFor, CORRIDOR } from './lasers.js';
+import { LASERS, laserState, laserHits, checkpointFor, CORRIDOR, dangerZone } from './lasers.js';
 import { SEAL_POS, PROPS, SPAWNS, CORE_SPOTS, VICTORY_SPOTS, CORE_ENTRY_Z } from './layout.js';
 
 const G = () => useGame.getState();
@@ -20,7 +20,7 @@ const ms = () => G().ms;
 export const initialState = () => ({
   modal: null, seal: null, wrongPicks: {}, lastAnswer: null,
   strikes: 0, lockdowns: 0, lockdown: false,
-  zaps: 0, furthestZ: 1, lastZapAt: -99,
+  zaps: 0, furthestZ: 1, lastZapAt: -99, corridorHint: false,
   teamInCore: false, consoleOn: false,
 });
 
@@ -131,8 +131,12 @@ function startLockdown() {
 }
 
 // ---------------------------------------------------------------- lasers
+export const EXEMPTION_AFTER = 4;   // zaps before the skip option appears (nobody gets stuck)
 export const laserStates = LASERS.map((l) => laserState(l, 0));
-if (typeof window !== 'undefined') window.__lasers = laserStates; // for automated tests / debugging
+if (typeof window !== 'undefined') { // for automated tests / debugging
+  window.__lasers = laserStates;
+  window.__laserDefs = LASERS.map((l) => ({ ...l, zone: dangerZone(l) }));
+}
 
 function updateLasers(st) {
   LASERS.forEach((l, i) => { laserStates[i] = laserState(l, world.time); });
@@ -140,7 +144,11 @@ function updateLasers(st) {
   const c = world.chars[st.active];
   const inCorridor = c.z < CORRIDOR.maxZ && c.z > CORRIDOR.minZ;
   if (!inCorridor) return;
-  if (c.z < ms().furthestZ - 0.5) G().patchMs({ furthestZ: c.z });
+  if (c.z < ms().furthestZ - 0.2) G().patchMs({ furthestZ: c.z });
+  if (!ms().corridorHint) {
+    G().patchMs({ corridorHint: true });
+    say({ who: 'mastermind', text: 'Gates: wait until they are DARK and steady, then walk through. Red JUMP zones on the floor: keep running and press SPACE just before the zone.' }, { interrupt: true });
+  }
   if (world.time - ms().lastZapAt < 0.8) return;
   const hitIdx = LASERS.findIndex((l, i) => laserHits(l, laserStates[i], c));
   if (hitIdx < 0) return;
@@ -161,7 +169,12 @@ function zap(c, st) {
     'ZAP! That laser was rated "PG: Painfully Graded". Back to the checkpoint.',
     'ZAP! Your compliance has been noted. Loudly.',
   ];
-  if (!G().dialogue.current) say({ who: 'admin', text: quips[zaps % quips.length], duration: 2.4 });
+  if (zaps === EXEMPTION_AFTER) {
+    say([
+      { who: 'admin', text: 'Four zaps. My paperwork is getting singed. I can offer you a COMPLIANCE EXEMPTION: press E right here at the checkpoint to skip the corridor.' },
+      { who: 'commentator', mood: 'excited', text: 'Or keep trying, folks! Wait for the dark gates, jump the red zones!' },
+    ], { interrupt: true });
+  } else if (!G().dialogue.current) say({ who: 'admin', text: quips[zaps % quips.length], duration: 2.4 });
 }
 
 // ---------------------------------------------------------------- final prompt
@@ -220,6 +233,16 @@ export function startVictory() {
 // ---------------------------------------------------------------- interactables
 export const INTERACTABLES = [
   ...SEALS.map(sealInteractable),
+  {
+    id: 'exemption', x: 0, z: -0.9, r: 1.3,
+    label: (s) => (s.ms.zaps >= EXEMPTION_AFTER && !s.ms.teamInCore ? 'Accept the compliance exemption (skip the lasers)' : null),
+    use: () => {
+      sfx.success();
+      const c = world.chars[G().active];
+      Object.assign(c, { x: 0, z: CORE_ENTRY_Z - 0.6, vx: 0, vz: 0, y: 0, vy: 0, grounded: true });
+      say({ who: 'admin', text: 'Exemption granted. Stamped, signed, laminated. Please proceed. And do not tell the other lasers.' }, { interrupt: true });
+    },
+  },
   {
     id: 'barrier', x: 0, z: 1.3, r: 1.8,
     label: (s) => (hasAllSeals(s.inventory) ? null : 'Touch the energy barrier'),
@@ -318,7 +341,7 @@ export function objective(s) {
   if (s.doorOpen) return 'Collect your certificates!';
   const n = SEALS.filter((x) => s.inventory.includes(x.id)).length;
   if (n < SEALS.length) return `Secure the 4 Seals of Responsible AI (${n}/4)`;
-  if (!s.ms.teamInCore) return 'Cross the Laser Corridor: SPACE to jump low lasers, wait for blinking gates';
+  if (!s.ms.teamInCore) return 'Cross the Laser Corridor: stop at WAIT lines until gates go dark, press SPACE just before red JUMP zones';
   if (!s.ms.consoleOn) return 'Power up the Final Prompt console (needs The Commentator)';
   return 'Write THE FINAL PROMPT at the console';
 }

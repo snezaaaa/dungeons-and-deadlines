@@ -31,6 +31,17 @@ const useSeal = async (key, idx, seal) => {
   await teleport(idx, ...SEAL_SPOT[seal]); await wait(300);
   await page.keyboard.press('KeyE'); await wait(400);
 };
+// Stand in gate g1's beam (re-placing every frame) until the game registers a zap.
+const zapAtGate = (i) => page.evaluate((i) => new Promise((resolve) => {
+  const g = window.__game.useGame, start = g.getState().ms.zaps, t0 = performance.now();
+  const f = () => {
+    if (g.getState().ms.zaps > start) return resolve(true);
+    if (performance.now() - t0 > 12000) return resolve(false);
+    if (window.__lasers[0].on) { const c = window.__world.chars[i]; c.x = 0; c.z = -2.8; c.vx = c.vz = 0; }
+    requestAnimationFrame(f);
+  };
+  f();
+}), i);
 const pick = async (opt) => { await page.click(`[data-testid=opt-${opt}]`); await wait(350); };
 
 await page.goto(BASE);
@@ -97,17 +108,56 @@ check('barrier is down', await page.evaluate(() => window.__world.colliders.find
 
 // ---- laser corridor: a zap sends you back to the checkpoint
 const a = (await st()).active;
-await page.waitForFunction(() => window.__lasers[0].on, null, { timeout: 8000 });
-await teleport(a, 0, -3.2, 0);
-check('touching an active laser gate zaps you', await waitFor((s) => s.ms.zaps >= 1, 2000));
+await page.evaluate(() => { window.__world.cam.yaw = 0; });
+check('touching an active laser gate zaps you', await zapAtGate(a));
 const back = await pos(a);
 check('zap returns you to the first checkpoint', Math.abs(back.z + 0.9) < 0.6, JSON.stringify(back));
 await wait(400); await shot('m3-07-corridor');
-// past the last laser, walk into the core
-await teleport(a, 0, -15.6, 0); await wait(200);
-await hold('KeyW', 900);
-check('reaching the core brings the team along', await waitFor((s) => s.ms.teamInCore, 3000));
+check('no exemption offered after just one zap', !(await page.evaluate(() => window.__game.useGame.getState().nearby?.id === 'exemption')));
+await page.evaluate(() => window.__game.useGame.getState().patchMs({ zaps: 3 }));
+await zapAtGate(a);
+await wait(500);
+check('after 4 zaps the Administrator offers a skip at the checkpoint', await page.evaluate(() => window.__game.useGame.getState().nearby?.id === 'exemption'));
+await shot('m3-07a-exemption');
+
+// ---- play the corridor LIVE: real keyboard input (W + Space), real physics and hit detection.
+// The bot only uses what a player can see: gate lit/flickering/dark, and the red JUMP zones.
+await page.evaluate((ai) => {
+  const w = window.__world, defs = window.__laserDefs;
+  window.__botDone = false;
+  const press = (code, down) => window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code }));
+  let walking = false, clearSince = null;
+  const tick = () => {
+    const c = w.chars[ai];
+    const s = window.__game.useGame.getState();
+    if (s.ms.teamInCore || window.__botDone) { press('KeyW', false); window.__botDone = true; return; }
+    w.cam.yaw = 0;
+    let go = true;
+    defs.forEach((l, i) => {
+      const st = window.__lasers[i];
+      if (l.type === 'gate') {
+        const d = c.z - l.z;
+        if (d > 0.95 && d < 1.3) {
+          const dark = !st.on && !st.warn;
+          clearSince = dark ? (clearSince ?? performance.now()) : null;
+          if (!dark || performance.now() - clearSince < 250) go = false;
+        }
+      } else {
+        const d = c.z - l.zone[0];
+        if (d > 0 && d < 0.75 && c.grounded) { press('Space', true); press('Space', false); }
+      }
+    });
+    if (go !== walking) { press('KeyW', go); walking = go; }
+    setTimeout(tick, 16);
+  };
+  tick();
+}, a);
+await page.waitForFunction(() => window.__botDone || window.__game.useGame.getState().ms.teamInCore, null, { timeout: 90000 }).catch(() => {});
+await page.evaluate(() => { window.__botDone = true; });
+s = await st();
+check('the corridor can be crossed live with keyboard controls', s.ms.teamInCore, `zaps during live run: ${s.ms.zaps - 1}`);
 check('every teammate is now in the core', await page.evaluate(() => window.__world.chars.every((c) => c.z < -16.4)));
+await shot('m3-07b-core');
 
 // ---- final prompt
 await page.keyboard.press('Digit1'); await wait(250);
