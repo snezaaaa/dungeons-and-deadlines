@@ -11,7 +11,9 @@
     "test:e2e": "node tests/e2e/playthrough.mjs && node tests/e2e/mission2.mjs && node tests/e2e/mission3.mjs",
     "test:e2e:m1": "node tests/e2e/playthrough.mjs",
     "test:e2e:m2": "node tests/e2e/mission2.mjs",
-    "test:e2e:m3": "node tests/e2e/mission3.mjs"
+    "test:e2e:m3": "node tests/e2e/mission3.mjs",
+    "record": "node tools/record/record.mjs",
+    "record:assemble": "bash tools/record/assemble.sh"
   },
   "dependencies": {
     "@react-three/drei": "9.122.0",

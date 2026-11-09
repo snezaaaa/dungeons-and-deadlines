@@ -126,6 +126,24 @@ npm run build && (npx vite preview --port 4173 &) && npm run test:e2e
 ```
 This runs automated play-throughs of all three missions in real Chromium with WebGL (`test:e2e:m1`, `test:e2e:m2` and `test:e2e:m3` run them separately). Mission 3's covers its intro, the barrier, wrong-character and wrong-answer handling, the 3-strike lockdown, all four seals, a laser zap and checkpoint, the team catching up, the console, rejection of an unsafe guardrail, the vault cutscene, victory, and the named certificate. Mission 2's covers mission select, its intro, caffeine drain, Mop-Bot knockback, every character's evidence, the dishwasher collider swap, snacks, the nap failure state, rejection of an unreliable source, highlighting of the bad claim, the grounded cutscene, victory and the debrief. Mission 1's covers the loading and title screens, the intro, movement, wall collision, jumping, character switching, wrong-character and right-character interactions, all four pickups, the terminal, pause, a failed prompt, a successful prompt, the door cutscene, walking through the door, victory, the debrief, and the phone-width layout. It saves screenshots to `tests/e2e/screenshots/`.
 
+## Recording gameplay videos (trailers for social media)
+
+`tools/record/` records smooth 30 fps gameplay videos automatically. It takes over the page's clock and renders one frame at a time, so the result is perfectly smooth even on a slow machine. Each segment is a scripted sequence of real gameplay: walking, character switching, puzzles, cutscenes. You need Playwright, Chromium and ffmpeg.
+
+```bash
+npm run build && (npx vite preview --port 4173 &)
+```
+
+```bash
+npm run record -- --format landscape --segment m1
+```
+Formats: `landscape` (1920x1080: YouTube, LinkedIn, X) or `vertical` (1080x1920: Reels, TikTok, Shorts). Segments: `intro`, `m1`, `m2`, `m3`, `outro`. Add `--maxsec 3` for a short preview, and `--site your.url` to change the address shown on the end card.
+
+```bash
+npm run record:assemble -- landscape
+```
+This turns the frames into `recordings/<format>/<segment>.mp4` clips plus `dungeons-and-deadlines-trailer-<format>.mp4`. The videos have no sound, so add music in your social media app. Rendering takes about 20–30 seconds of computer time per second of video when there's no graphics card.
+
 ## Project structure
 
 ```
@@ -145,6 +163,7 @@ src/
     GameScene.jsx            Physics loop, third-person + cinematic camera, mouse look
     canvasTexture.js         All in-world text drawn on canvas (no font downloads)
   ui/PromptBuilderBase.jsx   Reusable card-based prompt builder (Missions 1 and 3)
+tools/record/                Trailer recorder (record.mjs) and MP4 assembly (assemble.sh)
   missions/
     registry.js              Mission list + the shared mission interface
     mission1/

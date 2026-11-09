@@ -13,6 +13,7 @@ export default function App() {
         dpr={[1, 1.75]}
         camera={{ fov: 55, near: 0.1, far: 120, position: [8, 5.5, 6] }}
         gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+        onCreated={({ camera }) => { window.__camera = camera; /* used by tools/record (e.g. wider FOV for vertical video) */ }}
       >
         <Suspense fallback={null}>
           <GameScene />
