@@ -41,7 +41,7 @@ Teaches **fact-checking AI output**: hallucinations, source credibility and veri
 
    You can also pick up unreliable decoys: BREW-9000's own brochure, and a forum printout from "CoffeeTruthz420".
 3. **Stay awake.** A caffeine meter drains while you explore (about 5 minutes from full). Patrolling **Mop-Bots** knock you back and cost caffeine. Donuts, sugar packets and the water cooler refill it. If it hits 0, everyone naps: that's the failure state, and you wake up at 60% to try again.
-4. At the **Fact-Check Station**, choose a source and a verdict (TRUE or HALLUCINATION) for each claim. A claim only counts when the verdict is right *and* the source is reliable. If you cite the brochure, BREW-9000 gloats. Two of the five claims are actually true, because AI isn't always wrong.
+4. At the **Fact-Check Station**, go through the claims one at a time: **① pick ONE source you trust**, then **② decide if the claim is TRUE or FALSE** (step 2 unlocks after step 1). A progress bar shows all five claims, and Submit unlocks once every claim is answered. A claim only counts when the verdict is right *and* the source is reliable. If you cite the brochure, BREW-9000 gloats. Two of the five claims are actually true, because AI isn't always wrong.
 5. When all five are verified, BREW-9000 is grounded, the coffee flows and the vault door opens. Walk into the antechamber for the victory sequence and the debrief on hallucinations and sources (certificate 66%).
 
 ## Mission 3: The Final Certificate (playable finale)

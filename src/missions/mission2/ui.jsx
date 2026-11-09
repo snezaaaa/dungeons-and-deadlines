@@ -34,13 +34,28 @@ export function NapOverlay() {
 }
 
 // ---------------------------------------------------------------- fact-check station
-const VERDICTS = [[true, '✔ TRUE'], [false, '✖ HALLUCINATION']];
+const VERDICTS = [[true, '✔ TRUE'], [false, '✖ FALSE (a hallucination)']];
 const NONE = {};
 
+const STATUS_TEXT = {
+  ok: '✔ verified',
+  lucky: '⚠ right answer, but an unreliable source',
+  unreliable: '✖ unreliable source',
+  wrong: '✖ the source says the opposite',
+  missing: '✖ not answered',
+};
+
+/**
+ * One claim at a time, two explicit steps:
+ *   STEP 1  pick ONE source you trust   (radio-style)
+ *   STEP 2  decide TRUE or FALSE         (unlocks after step 1)
+ * A progress bar shows all five claims; SUBMIT unlocks when every claim is answered.
+ */
 export function FactChecker() {
   const inventory = useGame((s) => s.inventory);
   const answers = useGame((s) => s.ms.answers || NONE);
   const attempts = useGame((s) => s.attempts);
+  const [current, setCurrent] = useState(0);
   const [result, setResult] = useState(null);
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
@@ -59,9 +74,11 @@ export function FactChecker() {
     sfx.interact();
     useGame.getState().patchMs((m) => ({ answers: { ...m.answers, [claimId]: { ...(m.answers?.[claimId] || {}), ...patch } } }));
   };
+  const isDone = (c) => !!answers[c.id]?.source && typeof answers[c.id]?.verdict === 'boolean';
+  const doneCount = CLAIMS.filter(isDone).length;
 
   const onSubmit = () => {
-    if (busy) return;
+    if (busy || doneCount < CLAIMS.length) return;
     setBusy(true); setTyped(''); setResult(null);
     setTimeout(() => {
       const r = submitFactCheck();
@@ -72,6 +89,11 @@ export function FactChecker() {
 
   const showStatus = result && !result.success && attempts >= 2;
   const reliableFound = inventory.filter((k) => SOURCES[k]?.reliable).length;
+  const c = CLAIMS[current];
+  const a = answers[c.id] || {};
+  const options = sourcesFor(c.id, inventory);
+  const status = showStatus ? result.results[c.id] : null;
+  const isLast = current === CLAIMS.length - 1;
 
   return (
     <div className="builder-wrap" data-testid="fact-checker">
@@ -79,56 +101,76 @@ export function FactChecker() {
         <div className="builder-head">
           <div>
             <div className="builder-title">FACT-CHECK STATION <span>// grounding BREW-9000</span></div>
-            <div className="builder-sub">
-              For each claim, pick the source you trust, then decide whether the claim is TRUE or a HALLUCINATION.
-              Check who wrote each source. Reliable evidence found: <b>{reliableFound}/5</b>.
+            <div className="builder-sub how">
+              For each of the 5 claims: <b>① pick ONE source you trust</b>, then <b>② decide if the claim is TRUE or FALSE</b>.
+              Answer all 5, then submit. Reliable evidence found so far: <b>{reliableFound}/5</b>.
             </div>
           </div>
           <button className="btn small" onClick={() => useGame.getState().closeBuilder()} data-testid="builder-close">✕ Close (Esc)</button>
         </div>
 
-        <div className="claims">
-          {CLAIMS.map((c, idx) => {
-            const a = answers[c.id] || {};
-            const options = sourcesFor(c.id, inventory);
-            const status = showStatus ? result.results[c.id] : null;
+        <div className="claim-tabs" role="tablist" aria-label="Claims">
+          {CLAIMS.map((cl, i) => {
+            const st = showStatus ? result.results[cl.id] : null;
             return (
-              <div key={c.id} className={`claim ${status ? (status === 'ok' ? 'ok' : 'bad') : ''}`} data-testid={`claim-${c.id}`}>
-                <div className="claim-text"><span className="claim-num">#{idx + 1}</span> “{c.text}” {status && <em className="claim-status">{status === 'ok' ? '✔ verified' : status === 'lucky' ? '⚠ right answer, unreliable source' : status === 'unreliable' ? '✖ unreliable source' : status === 'wrong' ? '✖ wrong verdict' : '✖ incomplete'}</em>}</div>
-                <div className="claim-body">
-                  <div className="sources">
-                    {options.map((sid) => {
-                      const s = SOURCES[sid];
-                      return (
-                        <button key={sid} data-testid={`src-${c.id}-${sid}`} disabled={busy}
-                          className={`source ${a.source === sid ? 'sel' : ''}`} style={{ '--c': s.color }}
-                          onClick={() => setAnswer(c.id, { source: a.source === sid ? null : sid })}>
-                          <b>{s.title}</b>
-                          <small>{s.author}</small>
-                          <span>“{s.claims[c.id]}”</span>
-                        </button>
-                      );
-                    })}
-                    {!options.some((sid) => SOURCES[sid].reliable) && (
-                      <div className="source missing">🔍 No independent evidence yet. Search the break room (each character can unlock one source).</div>
-                    )}
-                  </div>
-                  <div className="verdicts">
-                    {VERDICTS.map(([v, label]) => (
-                      <button key={label} data-testid={`verdict-${c.id}-${v}`} disabled={busy}
-                        className={`verdict ${v ? 'true' : 'false'} ${a.verdict === v ? 'sel' : ''}`}
-                        onClick={() => setAnswer(c.id, { verdict: a.verdict === v ? null : v })}>{label}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <button key={cl.id} role="tab" aria-selected={i === current} data-testid={`claim-tab-${cl.id}`}
+                className={`claim-tab ${i === current ? 'current' : ''} ${isDone(cl) ? 'done' : ''} ${st ? (st === 'ok' ? 'ok' : 'bad') : ''}`}
+                onClick={() => setCurrent(i)}>
+                <b>{i + 1}</b>{isDone(cl) ? ' ✓' : ''}
+              </button>
             );
           })}
         </div>
 
+        <div className={`claim one ${status ? (status === 'ok' ? 'ok' : 'bad') : ''}`} data-testid={`claim-${c.id}`}>
+          <div className="claim-count">Claim {current + 1} of {CLAIMS.length}{status && <em className="claim-status"> · {STATUS_TEXT[status]}</em>}</div>
+          <div className="claim-text big">BREW-9000 says: “{c.text}”</div>
+
+          <div className="step">
+            <div className="step-title"><span className="step-num">1</span> Which <u>one</u> source do you trust? <small>Look at who wrote it.</small></div>
+            <div className="sources" role="radiogroup">
+              {options.map((sid) => {
+                const src = SOURCES[sid];
+                const sel = a.source === sid;
+                return (
+                  <button key={sid} role="radio" aria-checked={sel} data-testid={`src-${c.id}-${sid}`} disabled={busy}
+                    className={`source ${sel ? 'sel' : ''}`} style={{ '--c': src.color }}
+                    onClick={() => setAnswer(c.id, { source: sid })}>
+                    <span className="radio" aria-hidden="true" />
+                    <b>{src.title}</b>
+                    <small>Written by: {src.author}</small>
+                    <span className="says">“{src.claims[c.id]}”</span>
+                  </button>
+                );
+              })}
+            </div>
+            {!options.some((sid) => SOURCES[sid].reliable) && (
+              <div className="source-missing">🔍 You only have BREW-9000's own materials (or rumours) for this claim. Find real evidence in the break room first: each character can unlock one source.</div>
+            )}
+          </div>
+
+          <div className={`step ${a.source ? '' : 'locked'}`}>
+            <div className="step-title"><span className="step-num">2</span> According to that source, the claim is…{!a.source && <small> pick a source first</small>}</div>
+            <div className="verdicts">
+              {VERDICTS.map(([v, label]) => (
+                <button key={label} data-testid={`verdict-${c.id}-${v}`} disabled={busy || !a.source}
+                  className={`verdict ${v ? 'true' : 'false'} ${a.verdict === v ? 'sel' : ''}`}
+                  onClick={() => setAnswer(c.id, { verdict: v })}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="claim-nav">
+            <button className="btn small" disabled={current === 0} onClick={() => setCurrent(current - 1)} data-testid="claim-prev">◀ Previous</button>
+            {!isLast && <button className={`btn ${isDone(c) ? 'primary pulse' : ''}`} onClick={() => setCurrent(current + 1)} data-testid="claim-next">Next claim ▶</button>}
+          </div>
+        </div>
+
         <div className="builder-foot">
-          <button className="btn primary big" onClick={onSubmit} disabled={busy} data-testid="submit-factcheck">{busy && !result ? 'BREW-9000 IS REVIEWING…' : '⚡ SUBMIT FACT-CHECK'}</button>
-          <span className="muted">Attempts: {attempts}</span>
+          <button className="btn primary big" onClick={onSubmit} disabled={busy || doneCount < CLAIMS.length} data-testid="submit-factcheck">
+            {busy && !result ? 'BREW-9000 IS REVIEWING…' : '⚡ SUBMIT FACT-CHECK'}
+          </button>
+          <span className="muted">{doneCount < CLAIMS.length ? `${doneCount} of ${CLAIMS.length} claims answered` : 'All claims answered!'} · Attempts: {attempts}</span>
         </div>
 
         {(result || busy) && (

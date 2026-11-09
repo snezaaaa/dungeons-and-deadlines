@@ -105,7 +105,7 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
 .toast-tip { font-size: 13px; color: #cbd5e1; }
 
 /* ---------- prompt builder ---------- */
-.builder-wrap { position: absolute; inset: 0; background: rgba(3, 6, 18, .72); display: flex; align-items: center; justify-content: center; padding: 14px; z-index: 20; backdrop-filter: blur(3px); }
+.builder-wrap { position: absolute; inset: 0; background: rgba(3, 6, 18, .72); display: flex; align-items: center; justify-content: center; padding: 104px 14px 14px; /* top space: subtitles sit above puzzle windows */ z-index: 20; backdrop-filter: blur(3px); }
 .builder { width: min(1120px, 100%); max-height: 100%; overflow-y: auto; background: linear-gradient(180deg, #0f1730, #0b1022); border: 2px solid #22d3ee; border-radius: 18px; padding: 16px; box-shadow: 0 0 50px rgba(34, 211, 238, .25); padding-bottom: 130px; }
 .builder-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .builder-title { font: 900 22px var(--display); color: #22d3ee; }
@@ -303,3 +303,33 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
   #print-certificate .cert-sign i { width: 55mm; }
   #print-certificate .seal { font-size: 30pt; }
 }
+
+/* ---------- fact-check station: one claim at a time ---------- */
+.builder-sub.how { font-size: 14px; color: #e2e8f0; }
+.builder-sub.how b { color: #fde68a; }
+.claim-tabs { display: flex; gap: 6px; margin-top: 12px; }
+.claim-tab { flex: 1; font: 800 14px var(--font); color: #cbd5e1; background: #172036; border: 2px solid #26324d; border-radius: 10px; padding: 8px 4px; cursor: pointer; }
+.claim-tab.done { background: color-mix(in srgb, #f59e0b 22%, #172036); color: #fde68a; }
+.claim-tab.current { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, .35); color: #fff; }
+.claim-tab.ok { border-color: var(--green); background: rgba(34, 197, 94, .2); }
+.claim-tab.bad { border-color: var(--red); background: rgba(239, 68, 68, .2); }
+.claim.one { margin-top: 10px; padding: 14px; }
+.claim-count { font: 900 12px var(--display); letter-spacing: .1em; color: #fbbf24; }
+.claim-text.big { font-size: clamp(17px, 2.2vw, 21px); margin: 6px 0 4px; }
+.step { margin-top: 12px; }
+.step.locked { opacity: .55; }
+.step-title { font-weight: 800; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.step-title small { color: var(--muted); font-weight: 600; }
+.step-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #f59e0b; color: #111; font: 900 13px var(--display); }
+.source { position: relative; padding-left: 36px; }
+.source .radio { position: absolute; left: 10px; top: 11px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #94a3b8; }
+.source.sel .radio { border-color: #fff; background: radial-gradient(circle, #fff 0 4px, transparent 5px); }
+.source .says { color: #cbd5e1; font-style: italic; }
+.source-missing { margin-top: 8px; padding: 10px 12px; border-radius: 10px; border: 2px dashed #475569; color: #cbd5e1; font-size: 13px; }
+.factcheck .verdicts { flex-direction: row; }
+.factcheck .verdict { flex: 1; font-size: 15px; padding: 12px; }
+.factcheck .verdict:disabled { cursor: not-allowed; }
+.claim-nav { display: flex; justify-content: space-between; margin-top: 14px; }
+.btn.pulse { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 5px 0 #a16207, 0 0 0 6px rgba(250, 204, 21, .35); } }
+@media (max-width: 760px) { .factcheck .verdicts { flex-direction: column; } }
