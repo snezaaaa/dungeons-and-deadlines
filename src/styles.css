@@ -249,6 +249,10 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
 .finale { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
 .certificate { background: #fffbeb; color: #451a03; border: 10px double #b45309; border-radius: 6px; padding: 26px 22px; text-align: center; font-family: Georgia, 'Times New Roman', serif; display: flex; flex-direction: column; gap: 6px; }
 .cert-top { font: 900 13px var(--display); letter-spacing: .3em; color: #92400e; }
+.cert-logo { height: clamp(44px, 7vw, 64px); width: auto; align-self: center; margin-bottom: 4px; }
+.cert-organiser { font-size: 15px; color: #451a03; margin-top: 4px; }
+.cert-sign { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.cert-sign i { display: block; width: 160px; border-top: 1px solid #92400e; margin-bottom: 4px; }
 .cert-title { font-size: clamp(26px, 4vw, 40px); font-style: italic; }
 .cert-small { font-size: 14px; color: #78350f; }
 .cert-name { font-size: clamp(26px, 4.5vw, 44px); font-weight: 700; border-bottom: 2px solid #b45309; margin: 2px auto 6px; padding: 0 24px; min-width: 50%; }
@@ -267,10 +271,35 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
 .credits span { font-weight: 700; }
 @media (max-width: 760px) { .recap { grid-template-columns: 1fr; } }
 
-/* print only the certificate */
+/* ---------- certificate printing ----------
+   A dedicated copy (#print-certificate, portalled under <body>) is the only thing printed.
+   It is sized in millimetres to fit A4 landscape (297x210) or US Letter landscape (279.4x215.9);
+   the paper is chosen with the print buttons (data-paper on <html>), A4 by default. */
+#print-certificate { display: none; }
 @media print {
-  body * { visibility: hidden !important; }
-  .certificate, .certificate * { visibility: visible !important; }
-  .certificate { position: fixed; inset: 10mm; border-width: 14px; }
-  html, body, #root { background: #fff !important; }
+  @page { size: A4 landscape; margin: 0; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(#print-certificate) { display: none !important; }
+  #print-certificate {
+    display: flex !important; align-items: center; justify-content: center;
+    width: var(--page-w, 297mm); height: var(--page-h, 210mm); margin: 0; padding: 0;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  html[data-paper='letter'] #print-certificate { --page-w: 279.4mm; --page-h: 215.9mm; }
+  #print-certificate .certificate {
+    box-sizing: border-box; width: calc(var(--page-w, 297mm) - 24mm); height: calc(var(--page-h, 210mm) - 24mm);
+    margin: 0; padding: 12mm 16mm; border: 3.5mm double #b45309; border-radius: 2mm;
+    justify-content: space-between; gap: 0; page-break-inside: avoid; break-inside: avoid;
+  }
+  #print-certificate .cert-logo { height: 20mm; }
+  #print-certificate .cert-top { font-size: 11pt; }
+  #print-certificate .cert-title { font-size: 32pt; }
+  #print-certificate .cert-small { font-size: 12pt; }
+  #print-certificate .cert-name { font-size: 34pt; min-width: 55%; }
+  #print-certificate .cert-course { font-size: 16pt; }
+  #print-certificate .cert-skills { font-size: 12pt; }
+  #print-certificate .cert-organiser { font-size: 13pt; }
+  #print-certificate .cert-foot { font-size: 11pt; margin-top: 4mm; }
+  #print-certificate .cert-sign i { width: 55mm; }
+  #print-certificate .seal { font-size: 30pt; }
 }

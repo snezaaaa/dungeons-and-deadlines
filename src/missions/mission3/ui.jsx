@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import jaLogo from '../../assets/ja-europe-logo-dark.png';
 import { useGame } from '../../game/store.js';
 import { ROSTER } from '../../characters/roster.js';
 import PromptBuilderBase from '../../ui/PromptBuilderBase.jsx';
@@ -118,24 +120,55 @@ const NAME_KEY = 'dd-final-prompt-name';
 const readName = () => { try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; } };
 const writeName = (v) => { try { localStorage.setItem(NAME_KEY, v); } catch { /* storage unavailable */ } };
 
+// Certificate details. ORGANISER is shown on the certificate as the training organiser.
+export const ORGANISER = 'JA Montenegro';
+const PAPER = {
+  a4: { label: 'A4', page: 'A4 landscape' },
+  letter: { label: 'US Letter', page: 'letter landscape' },
+};
+
+function Certificate({ name, date, testId }) {
+  return (
+    <div className="certificate" data-testid={testId}>
+      <img className="cert-logo" src={jaLogo} alt="JA Europe, member of JA Worldwide" />
+      <div className="cert-top">AI READY EDUCATORS</div>
+      <div className="cert-title">Certificate of Completion</div>
+      <div className="cert-small">This certifies that</div>
+      <div className="cert-name">{name.trim() || 'Your Name Here'}</div>
+      <div className="cert-small">together with The Mastermind, The Joker, The Boss, The Commentator and The Fighter, completed</div>
+      <div className="cert-course">DUNGEONS &amp; DEADLINES: THE FINAL PROMPT</div>
+      <div className="cert-skills">Prompt Engineering · Fact-Checking AI · Responsible AI Use</div>
+      <div className="cert-organiser">Training organiser: <b>{ORGANISER}</b></div>
+      <div className="cert-foot">
+        <span className="cert-sign"><i />Date: {date}</span>
+        <span className="seal">✦</span>
+        <span className="cert-sign"><i />{ORGANISER}<br /><small>and THE ADMINISTRATOR (reluctantly)</small></span>
+      </div>
+    </div>
+  );
+}
+
+/** Print: render a dedicated, page-sized copy straight under <body> and set the paper size. */
+function printCertificate(paper) {
+  let style = document.getElementById('cert-page-style');
+  if (!style) { style = document.createElement('style'); style.id = 'cert-page-style'; document.head.appendChild(style); }
+  style.textContent = `@page { size: ${PAPER[paper].page}; margin: 0; }`;
+  document.documentElement.dataset.paper = paper;
+  window.print();
+}
+
 export function Finale() {
   const [name, setName] = useState(readName);
   const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   return (
     <div className="finale">
-      <div className="certificate" data-testid="certificate">
-        <div className="cert-top">AI READY EDUCATORS</div>
-        <div className="cert-title">Certificate of Completion</div>
-        <div className="cert-small">This certifies that</div>
-        <div className="cert-name">{name.trim() || 'Your Name Here'}</div>
-        <div className="cert-small">together with The Mastermind, The Joker, The Boss, The Commentator and The Fighter, survived</div>
-        <div className="cert-course">DUNGEONS &amp; DEADLINES: THE FINAL PROMPT</div>
-        <div className="cert-skills">Prompt Engineering · Fact-Checking AI · Responsible AI Use</div>
-        <div className="cert-foot"><span>{date}</span><span className="seal">✦</span><span>THE ADMINISTRATOR<br /><small>(reluctantly)</small></span></div>
-      </div>
+      <Certificate name={name} date={date} testId="certificate" />
+      {createPortal(<div id="print-certificate"><Certificate name={name} date={date} testId="print-certificate" /></div>, document.body)}
       <div className="cert-controls">
         <label>Name on certificate <input data-testid="cert-name" value={name} maxLength={40} placeholder="Type your name" onChange={(e) => { setName(e.target.value); writeName(e.target.value); }} /></label>
-        <button className="btn" onClick={() => window.print()}>🖨 Print certificate</button>
+        {Object.entries(PAPER).map(([k, p]) => (
+          <button key={k} className="btn" data-testid={`print-${k}`} onClick={() => printCertificate(k)}>🖨 Print ({p.label})</button>
+        ))}
       </div>
       <h3>🎓 The whole course in three lines</h3>
       <div className="recap">

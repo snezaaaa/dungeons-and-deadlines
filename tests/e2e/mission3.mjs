@@ -190,6 +190,24 @@ const txt = await page.textContent('[data-testid=complete-screen]');
 check('debrief: 100% + responsible-use lesson + course recap', /100%/.test(txt) && /Responsibly/i.test(txt) && /Mission 2 · Check it/.test(txt));
 await page.fill('[data-testid=cert-name]', 'Ms. Example');
 check('certificate shows the typed name', /Ms\. Example/.test(await page.textContent('[data-testid=certificate]')));
+check('certificate names JA Montenegro as training organiser', /Training organiser:\s*JA Montenegro/.test(await page.textContent('[data-testid=certificate]')));
+check('JA logo loads on the certificate', await page.evaluate(() => { const i = document.querySelector('[data-testid=certificate] .cert-logo'); return !!i && i.complete && i.naturalWidth > 0; }));
+for (const [paper, size] of [['a4', /A4|841/], ['letter', /letter|792/]]) {
+  await page.evaluate((paper) => {
+    let st = document.getElementById('cert-page-style');
+    if (!st) { st = document.createElement('style'); st.id = 'cert-page-style'; document.head.appendChild(st); }
+    st.textContent = `@page { size: ${paper === 'a4' ? 'A4' : 'letter'} landscape; margin: 0; }`;
+    document.documentElement.dataset.paper = paper;
+  }, paper);
+  await page.emulateMedia({ media: 'print' });
+  const pdf = (await page.pdf({ path: `${SHOTS}/m3-certificate-${paper}.pdf`, preferCSSPageSize: true, printBackground: true })).toString('latin1');
+  await page.emulateMedia({ media: 'screen' });
+  const pages = (pdf.match(/\/Type\s*\/Page[^s]/g) || []).length;
+  const box = /\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)/.exec(pdf);
+  const landscape = box && Number(box[1]) > Number(box[2]);
+  const expectW = paper === 'a4' ? 841.9 : 792;
+  check(`certificate prints on exactly one ${paper.toUpperCase()} landscape page`, pages === 1 && landscape && Math.abs(Number(box[1]) - expectW) < 2, `pages=${pages} mediabox=${box && box.slice(1).join('x')}`);
+}
 await page.evaluate(() => document.querySelector('[data-testid=certificate]').scrollIntoView());
 await wait(300); await shot('m3-12-certificate');
 check('no "Continue to Mission 4" button after the finale', !(await page.isVisible('[data-testid=next-mission]')));
