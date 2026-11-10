@@ -49,6 +49,11 @@ await page.addStyleTag({ content: `
   #rec-card .t { font-size: clamp(40px, 8vw, 92px); line-height: .95; color: #facc15; -webkit-text-stroke: 3px #111; text-shadow: 6px 6px 0 #c2410c; transform: rotate(-2deg); }
   #rec-card .s { font: 700 clamp(16px, 2.4vw, 26px) system-ui, sans-serif; color: #e2e8f0; max-width: 900px; }
   #rec-card .u { font: 800 clamp(15px, 2.2vw, 24px) system-ui, sans-serif; color: #111; background: #facc15; padding: 10px 18px; border-radius: 12px; }
+  #rec-cert { position: fixed; inset: 0; z-index: 997; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    padding: 24px; background: radial-gradient(circle at 50% 40%, #2a1f4d, #0b0d17 72%); opacity: 0; pointer-events: none; }
+  #rec-cert .k { font: 900 clamp(16px, 2.4vw, 26px) 'Arial Black', Impact, sans-serif; letter-spacing: .08em; color: #facc15; text-align: center; }
+  #rec-cert .certificate { width: min(1000px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  ${FORMAT === 'vertical' ? '#rec-cert .certificate { padding: 22px 14px; } #rec-cert .k { font-size: 20px; }' : ''}
   #rec-tag { position: fixed; left: 50%; top: 13%; transform: translateX(-50%); z-index: 998; pointer-events: none; opacity: 0;
     font: 900 clamp(18px, 3vw, 34px) 'Arial Black', Impact, sans-serif; color: #facc15; -webkit-text-stroke: 1.5px #111;
     text-shadow: 3px 3px 0 #111; white-space: nowrap; text-align: center; }
@@ -236,8 +241,23 @@ const SEGMENTS = {
 
   async outro() {
     await G(() => window.__game.useGame.setState({ missionId: 'mission3', phase: 'complete', ms: {} }));
-    await page.evaluate(() => { const i = document.querySelector('[data-testid=cert-name]'); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(i, 'Your Name Here'); i.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('[data-testid=certificate]').scrollIntoView({ block: 'center' }); });
-    await shoot(2.4);
+    await shoot(0.2);
+    // full-screen certificate showcase: a copy of the real certificate, with a name typed in live
+    await G((vertical) => {
+      const src = document.querySelector('[data-testid=certificate]');
+      const wrap = document.createElement('div'); wrap.id = 'rec-cert';
+      wrap.innerHTML = '<div class="k">COMPLETE ALL 3 MISSIONS AND EARN YOUR</div>';
+      const cert = src.cloneNode(true); cert.removeAttribute('data-testid'); wrap.appendChild(cert);
+      document.body.appendChild(wrap);
+      window.__recCert = { wrap, cert, name: cert.querySelector('.cert-name') };
+      window.__recCert.name.textContent = '\u00a0';
+    }, FORMAT === 'vertical');
+    const NAME = 'Ms. Rivera';
+    await shoot(0.5, async (i, total) => G(([o, sc]) => { const r = window.__recCert; r.wrap.style.opacity = o; r.cert.style.transform = `scale(${sc})`; }, [(i + 1) / total, 0.9 + 0.1 * (i + 1) / total]));
+    await shoot(0.4);
+    const perChar = Math.max(1, Math.round(FPS * 0.09));
+    for (let c = 1; c <= NAME.length; c++) { await G((t) => { window.__recCert.name.textContent = t; }, NAME.slice(0, c)); await shoot(perChar / FPS); }
+    await shoot(3.0);
     const html = `<div class="k">DUNGEONS &amp; DEADLINES</div><div class="t">THE FINAL<br>PROMPT</div><div class="s">Write better prompts · Fact-check AI · Use AI responsibly</div><div class="u">Play free in your browser: ${SITE}</div>`;
     await shoot(0.5, async (i, total) => card(i === 0 ? html : null, (i + 1) / total));
     await shoot(3.5);
