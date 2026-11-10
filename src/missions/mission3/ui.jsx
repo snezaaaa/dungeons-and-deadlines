@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import jaLogo from '../../assets/ja-europe-logo-dark.png';
+import { PROJECT_CREDIT } from '../../credits.js';
 import { useGame } from '../../game/store.js';
 import { ROSTER } from '../../characters/roster.js';
 import PromptBuilderBase from '../../ui/PromptBuilderBase.jsx';
@@ -130,7 +130,6 @@ const PAPER = {
 function Certificate({ name, date, testId }) {
   return (
     <div className="certificate" data-testid={testId}>
-      <img className="cert-logo" src={jaLogo} alt="JA Europe, member of JA Worldwide" />
       <div className="cert-top">AI READY EDUCATORS</div>
       <div className="cert-title">Certificate of Completion</div>
       <div className="cert-small">This certifies that</div>
@@ -144,6 +143,7 @@ function Certificate({ name, date, testId }) {
         <span className="seal">✦</span>
         <span className="cert-sign"><i />{ORGANISER}<br /><small>and THE ADMINISTRATOR (reluctantly)</small></span>
       </div>
+      <div className="cert-credit" data-testid="cert-credit">{PROJECT_CREDIT}</div>
     </div>
   );
 }

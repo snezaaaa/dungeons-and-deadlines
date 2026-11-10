@@ -28,6 +28,7 @@ const waitPhase = async (p, timeout = 30000) => { const t0 = Date.now(); while (
 
 await page.goto(BASE);
 await page.waitForSelector('[data-testid=start]', { timeout: 60000 });
+check('title screen shows the project credit', /organized by JA Europe and JA Montenegro/.test(await page.textContent('[data-testid=project-credit]').catch(() => '')));
 check('loading screen -> title screen', true);
 await wait(800); await shot('01-title');
 

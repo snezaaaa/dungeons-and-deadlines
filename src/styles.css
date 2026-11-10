@@ -249,7 +249,8 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
 .finale { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
 .certificate { background: #fffbeb; color: #451a03; border: 10px double #b45309; border-radius: 6px; padding: 26px 22px; text-align: center; font-family: Georgia, 'Times New Roman', serif; display: flex; flex-direction: column; gap: 6px; }
 .cert-top { font: 900 13px var(--display); letter-spacing: .3em; color: #92400e; }
-.cert-logo { height: clamp(44px, 7vw, 64px); width: auto; align-self: center; margin-bottom: 4px; }
+.cert-credit { font-size: 11px; font-style: italic; color: #92400e; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(146, 64, 14, .25); }
+.project-credit { max-width: 640px; margin: 4px auto 0; font-size: 12px; line-height: 1.4; text-align: center; color: #94a3b8; }
 .cert-organiser { font-size: 15px; color: #451a03; margin-top: 4px; }
 .cert-sign { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .cert-sign i { display: block; width: 160px; border-top: 1px solid #92400e; margin-bottom: 4px; }
@@ -291,7 +292,7 @@ kbd { display: inline-block; min-width: 1.7em; padding: 2px 6px; margin: 0 2px; 
     margin: 0; padding: 12mm 16mm; border: 3.5mm double #b45309; border-radius: 2mm;
     justify-content: space-between; gap: 0; page-break-inside: avoid; break-inside: avoid;
   }
-  #print-certificate .cert-logo { height: 20mm; }
+  #print-certificate .cert-credit { font-size: 9pt; margin-top: 4mm; padding-top: 2mm; }
   #print-certificate .cert-top { font-size: 11pt; }
   #print-certificate .cert-title { font-size: 32pt; }
   #print-certificate .cert-small { font-size: 12pt; }

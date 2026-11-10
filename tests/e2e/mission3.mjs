@@ -191,7 +191,8 @@ check('debrief: 100% + responsible-use lesson + course recap', /100%/.test(txt) 
 await page.fill('[data-testid=cert-name]', 'Ms. Example');
 check('certificate shows the typed name', /Ms\. Example/.test(await page.textContent('[data-testid=certificate]')));
 check('certificate names JA Montenegro as training organiser', /Training organiser:\s*JA Montenegro/.test(await page.textContent('[data-testid=certificate]')));
-check('JA logo loads on the certificate', await page.evaluate(() => { const i = document.querySelector('[data-testid=certificate] .cert-logo'); return !!i && i.complete && i.naturalWidth > 0; }));
+check('no logo on the certificate', await page.evaluate(() => !document.querySelector('[data-testid=certificate] img')));
+check('certificate shows the project credit', /independent project following the AI-Ready Educators Training of Trainers, organized by JA Europe and JA Montenegro/.test(await page.textContent('[data-testid=certificate]')));
 for (const [paper, size] of [['a4', /A4|841/], ['letter', /letter|792/]]) {
   await page.evaluate((paper) => {
     let st = document.getElementById('cert-page-style');
