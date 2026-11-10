@@ -3,6 +3,7 @@ import { useGame } from '../game/store.js';
 import { ROSTER, SPEAKERS } from '../characters/roster.js';
 import { MISSIONS, getMission } from '../missions/registry.js';
 import { sfx } from '../game/audio.js';
+import { PROJECT_CREDIT } from '../credits.js';
 import { startMission, skipIntro, resume, restartMission, switchTo, lockPointer } from './actions.js';
 
 export default function UI() {
@@ -141,6 +142,7 @@ function TitleScreen() {
       </div>
       <p className="mission-tagline">{selected.tagline}</p>
       <Controls />
+      <p className="project-credit" data-testid="project-credit">{PROJECT_CREDIT}</p>
     </div>
   );
 }
