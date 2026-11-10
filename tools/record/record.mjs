@@ -246,7 +246,7 @@ const SEGMENTS = {
     await G((vertical) => {
       const src = document.querySelector('[data-testid=certificate]');
       const wrap = document.createElement('div'); wrap.id = 'rec-cert';
-      wrap.innerHTML = '<div class="k">COMPLETE ALL 3 MISSIONS AND EARN YOUR</div>';
+      wrap.innerHTML = '<div class="k">COMPLETE ALL 3 MISSIONS<br>AND EARN YOUR</div>';
       const cert = src.cloneNode(true); cert.removeAttribute('data-testid'); wrap.appendChild(cert);
       document.body.appendChild(wrap);
       window.__recCert = { wrap, cert, name: cert.querySelector('.cert-name') };
